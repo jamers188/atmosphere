@@ -3,7 +3,10 @@ import bcrypt
 import json
 import os
 
-# File to store users
+# Set page configuration
+st.set_page_config(page_title="Atmosphere", page_icon="🌍", layout="wide")
+
+# --- USER DATABASE HANDLING ---
 USER_DB = "users.json"
 
 # Ensure user database file exists
@@ -11,87 +14,29 @@ if not os.path.exists(USER_DB):
     with open(USER_DB, "w") as f:
         json.dump({}, f)
 
-# Load users from file
 def load_users():
     with open(USER_DB, "r") as f:
         return json.load(f)
 
-# Save users to file
 def save_users(users):
     with open(USER_DB, "w") as f:
-        json.dump(users, f)
+        json.dump(users, f, indent=4)
 
-# Hash password
 def hash_password(password):
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
-# Verify password
 def verify_password(password, hashed):
     return bcrypt.checkpw(password.encode(), hashed.encode())
 
-# App UI
-st.set_page_config(page_title="atmosphere", page_icon="🌍", layout="centered")
+# --- SESSION MANAGEMENT ---
+if "user" not in st.session_state:
+    st.session_state["user"] = None
 
-# Sidebar Navigation
-page = st.sidebar.radio("Navigation", ["Log In", "Sign Up", "Your Circles"])
+# --- NAVIGATION ---
+st.sidebar.title("📍 Atmosphere")
+page = st.sidebar.radio("Navigate", ["Home", "Search", "Your Circles", "Log In", "Sign Up"])
 
-# **Log In Page**
-if page == "Log In":
-    st.image("https://via.placeholder.com/150", width=80)  # Placeholder for logo
-    st.title("Atmosphere")
-    st.subheader("Share your world, where you are")
-
-    st.write("### Log In")
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-    login_btn = st.button("Log In")
-
-    if login_btn:
-        users = load_users()
-        if username in users and verify_password(password, users[username]["password"]):
-            st.success(f"Welcome back, {username}!")
-            st.session_state["user"] = username  # Store session
-        else:
-            st.error("Invalid username or password!")
-
-# **Sign Up Page**
-elif page == "Sign Up":
-    st.write("### Create an Account")
-    account_type = st.radio("Account Type", ["General User", "Business"])
-    full_name = st.text_input("Full Name")
-    new_username = st.text_input("Username")
-    email = st.text_input("Email")
-    new_password = st.text_input("Password", type="password")
-    confirm_password = st.text_input("Confirm Password", type="password")
-    signup_btn = st.button("Create Account")
-
-    if signup_btn:
-        if new_password != confirm_password:
-            st.error("Passwords do not match!")
-        else:
-            users = load_users()
-            if new_username in users:
-                st.error("Username already exists!")
-            else:
-                users[new_username] = {
-                    "full_name": full_name,
-                    "email": email,
-                    "password": hash_password(new_password),
-                    "account_type": account_type
-                }
-                save_users(users)
-                st.success("Account created! You can now log in.")
-
-# **Circles Page**
-elif page == "Your Circles":
-    st.write("### Your Circles")
-    st.text_input("Search circles...")
-    st.button("Create a Circle")
-
-    st.write("#### My Circles")
-    st.info("You haven't joined any circles yet.")
-
-    st.write("#### Recommended For You")
+# --- SEARCH FUNCTIONALITY ---
 locations = [
     {"name": "Downtown Cafe", "type": "Location"},
     {"name": "Sunset Beach", "type": "Location"},
@@ -124,40 +69,96 @@ businesses = [
     {"name": "Sunset Spa", "type": "Business"},
 ]
 
-# Combine all searchable items
 search_data = locations + circles + events + businesses
 
-# Search Page
 def search_page():
     st.title("🔍 Search Locations, Circles, Events & Businesses")
+    query = st.text_input("Enter a name to search:")
     
-    # Search input
-    query = st.text_input("Type a name to search:")
-
     if query:
         results = [item for item in search_data if query.lower() in item["name"].lower()]
-        
         if results:
             st.write("### 🔎 Search Results:")
             for item in results:
                 st.write(f"**{item['name']}** ({item['type']})")
         else:
-            st.write("❌ No results found.")
+            st.warning("No results found.")
 
-# Sidebar Navigation
-st.sidebar.title("📍 Navigation")
-page = st.sidebar.radio("Go to", ["Home", "Search", "Profile"])
-
+# --- HOME PAGE ---
 if page == "Home":
     st.title("🏡 Welcome to Atmosphere")
-    st.write("Explore locations, join circles, and engage with events!")
+    st.subheader("Share your world, where you are")
+    st.image("https://via.placeholder.com/800x300", use_column_width=True)  # Placeholder banner
+
+    if st.session_state["user"]:
+        st.success(f"Welcome back, {st.session_state['user']}!")
+    else:
+        st.info("Log in or sign up to explore Atmosphere.")
+
+# --- LOG IN PAGE ---
+elif page == "Log In":
+    st.title("🔑 Log In")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    login_btn = st.button("Log In")
+
+    if login_btn:
+        users = load_users()
+        if username in users and verify_password(password, users[username]["password"]):
+            st.success(f"Welcome back, {username}!")
+            st.session_state["user"] = username  # Store session
+        else:
+            st.error("Invalid username or password!")
+
+# --- SIGN UP PAGE ---
+elif page == "Sign Up":
+    st.title("🆕 Create an Account")
+    account_type = st.radio("Account Type", ["General User", "Business"])
+    full_name = st.text_input("Full Name")
+    new_username = st.text_input("Username")
+    email = st.text_input("Email")
+    new_password = st.text_input("Password", type="password")
+    confirm_password = st.text_input("Confirm Password", type="password")
+    signup_btn = st.button("Sign Up")
+
+    if signup_btn:
+        if new_password != confirm_password:
+            st.error("Passwords do not match!")
+        else:
+            users = load_users()
+            if new_username in users:
+                st.error("Username already exists!")
+            else:
+                users[new_username] = {
+                    "full_name": full_name,
+                    "email": email,
+                    "password": hash_password(new_password),
+                    "account_type": account_type
+                }
+                save_users(users)
+                st.success("Account created! You can now log in.")
+
+# --- CIRCLES PAGE ---
+elif page == "Your Circles":
+    st.title("👥 Your Circles")
+    
+    st.text_input("🔎 Search circles...")
+    st.button("➕ Create a Circle")
+
+    st.write("### My Circles")
+    st.warning("You haven't joined any circles yet.")
+
+    st.write("### Recommended Circles")
+    for circle in circles[:3]:  # Show top 3 recommended circles
+        st.write(f"🔹 **{circle['name']}**")
+
+# --- SEARCH PAGE ---
 elif page == "Search":
     search_page()
-elif page == "Profile":
-    st.title("👤 User Profile")
-    st.write("Manage your account and settings.")
-    st.warning("No circles found for this filter.")
 
-    st.markdown("---")
-    st.markdown("🏠 Home | 👥 Groups | 📍 Explore | 👤 Profile", unsafe_allow_html=True)
-
+# --- FOOTER NAVIGATION ---
+st.markdown("---")
+st.markdown(
+    '<p style="text-align:center;">🏠 Home | 👥 Circles | 📍 Explore | 👤 Profile</p>',
+    unsafe_allow_html=True
+)
