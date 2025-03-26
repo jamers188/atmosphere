@@ -1,103 +1,99 @@
 import streamlit as st
-import sqlite3
 import bcrypt
+import json
+import os
 
-# Initialize session state
-if "logged_in" not in st.session_state:
-    st.session_state["logged_in"] = False
+# File to store users
+USER_DB = "users.json"
 
-# Database Setup
-def init_db():
-    conn = sqlite3.connect("users.db")
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE,
-            password TEXT
-        )
-    """)
-    conn.commit()
-    conn.close()
+# Ensure user database file exists
+if not os.path.exists(USER_DB):
+    with open(USER_DB, "w") as f:
+        json.dump({}, f)
 
-init_db()  # Initialize the database
+# Load users from file
+def load_users():
+    with open(USER_DB, "r") as f:
+        return json.load(f)
 
+# Save users to file
+def save_users(users):
+    with open(USER_DB, "w") as f:
+        json.dump(users, f)
 
-# Function to hash passwords
+# Hash password
 def hash_password(password):
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
+# Verify password
+def verify_password(password, hashed):
+    return bcrypt.checkpw(password.encode(), hashed.encode())
 
-# Function to check login credentials
-def authenticate_user(username, password):
-    conn = sqlite3.connect("users.db")
-    cursor = conn.cursor()
-    
-    cursor.execute("SELECT password FROM users WHERE username = ?", (username,))
-    user = cursor.fetchone()  # Fetch the stored hashed password
-    
-    conn.close()
-    
-    if user and bcrypt.checkpw(password.encode(), user[0].encode()):
-        return True
-    return False
+# App UI
+st.set_page_config(page_title="atmosphere", page_icon="🌍", layout="centered")
 
+# Sidebar Navigation
+page = st.sidebar.radio("Navigation", ["Log In", "Sign Up", "Your Circles"])
 
-# Function to register a new user
-def register_user(username, password):
-    conn = sqlite3.connect("users.db")
-    cursor = conn.cursor()
-    
-    try:
-        hashed_password = hash_password(password)
-        cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_password))
-        conn.commit()
-        conn.close()
-        return True
-    except sqlite3.IntegrityError:
-        return False  # Username already exists
+# **Log In Page**
+if page == "Log In":
+    st.image("https://via.placeholder.com/150", width=80)  # Placeholder for logo
+    st.title("atmosphere")
+    st.subheader("Share your world, where you are")
 
-
-# Page Navigation
-menu = st.sidebar.radio("Navigation", ["Login", "Register", "Dashboard"])
-
-# Login Page
-if menu == "Login":
-    st.title("Login")
-
+    st.write("### Log In")
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
+    login_btn = st.button("Log In")
 
-    if st.button("Login"):
-        if authenticate_user(username, password):
-            st.success("Login successful! Redirecting...")
-            st.session_state["logged_in"] = True  # Store session
-            st.session_state["username"] = username
-            st.experimental_rerun()  # Refresh the app
+    if login_btn:
+        users = load_users()
+        if username in users and verify_password(password, users[username]["password"]):
+            st.success(f"Welcome back, {username}!")
+            st.session_state["user"] = username  # Store session
         else:
-            st.error("Invalid username or password. Try again.")
+            st.error("Invalid username or password!")
 
-# Registration Page
-elif menu == "Register":
-    st.title("Register")
+# **Sign Up Page**
+elif page == "Sign Up":
+    st.write("### Create an Account")
+    account_type = st.radio("Account Type", ["General User", "Business"])
+    full_name = st.text_input("Full Name")
+    new_username = st.text_input("Username")
+    email = st.text_input("Email")
+    new_password = st.text_input("Password", type="password")
+    confirm_password = st.text_input("Confirm Password", type="password")
+    signup_btn = st.button("Create Account")
 
-    new_username = st.text_input("Choose a Username")
-    new_password = st.text_input("Choose a Password", type="password")
-
-    if st.button("Register"):
-        if register_user(new_username, new_password):
-            st.success("Registration successful! You can now log in.")
+    if signup_btn:
+        if new_password != confirm_password:
+            st.error("Passwords do not match!")
         else:
-            st.error("Username already exists. Choose a different one.")
+            users = load_users()
+            if new_username in users:
+                st.error("Username already exists!")
+            else:
+                users[new_username] = {
+                    "full_name": full_name,
+                    "email": email,
+                    "password": hash_password(new_password),
+                    "account_type": account_type
+                }
+                save_users(users)
+                st.success("Account created! You can now log in.")
 
-# Dashboard (Only if logged in)
-elif menu == "Dashboard":
-    if st.session_state["logged_in"]:
-        st.title(f"Welcome, {st.session_state['username']}!")
+# **Circles Page**
+elif page == "Your Circles":
+    st.write("### Your Circles")
+    st.text_input("Search circles...")
+    st.button("Create a Circle")
 
-        if st.button("Logout"):
-            del st.session_state["logged_in"]
-            del st.session_state["username"]
-            st.experimental_rerun()
-    else:
-        st.warning("Please log in to access the dashboard.")
+    st.write("#### My Circles")
+    st.info("You haven't joined any circles yet.")
+
+    st.write("#### Recommended For You")
+    st.warning("No circles found for this filter.")
+
+    st.markdown("---")
+    st.markdown("🏠 Home | 👥 Groups | 📍 Explore | 👤 Profile", unsafe_allow_html=True)
+
