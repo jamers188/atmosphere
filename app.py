@@ -2,7 +2,6 @@ import streamlit as st
 import bcrypt
 import json
 import os
-import random
 import base64
 
 # Set up page layout
@@ -119,7 +118,7 @@ elif page == "Log In / Sign Up":
                     save_users(users)
                     st.success("Account created! You can now log in.")
 
-# Profile Page
+# Profile Page (Show user's own posts)
 elif page == "Profile":
     if "user" in st.session_state:
         username = st.session_state["user"]
@@ -131,6 +130,20 @@ elif page == "Profile":
             st.write(f"**Account Type:** {user_data['account_type']}")
             st.write(f"**Followers:** {len(user_data.get('followers', []))}")
             st.write(f"**Following:** {len(user_data.get('following', []))}")
+
+            st.subheader("📸 Your Posts")
+            posts = load_posts()
+            user_posts = [post for post in posts if post["user"] == username]
+
+            if user_posts:
+                for post in reversed(user_posts):
+                    st.write(f"**{username}** posted:")
+                    if post.get("image"):
+                        st.image(base64.b64decode(post["image"]), caption=post.get("caption", ""), use_container_width=True)
+                    else:
+                        st.write(post.get("caption", "No caption."))
+            else:
+                st.info("You haven't posted anything yet.")
         else:
             st.error("User not found!")
     else:
@@ -208,4 +221,5 @@ if "user" in st.session_state:
     if st.button("Log Out"):
         del st.session_state["user"]
         st.experimental_rerun()
+
 
