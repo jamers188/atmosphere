@@ -38,7 +38,7 @@ page = st.sidebar.radio("Navigation", ["Log In", "Sign Up", "Your Circles"])
 # **Log In Page**
 if page == "Log In":
     st.image("https://via.placeholder.com/150", width=80)  # Placeholder for logo
-    st.title("atmosphere")
+    st.title("Atmosphere")
     st.subheader("Share your world, where you are")
 
     st.write("### Log In")
