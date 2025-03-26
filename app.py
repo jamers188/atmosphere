@@ -5,6 +5,7 @@ import os
 import time
 from datetime import datetime
 from PIL import Image
+import random
 
 # ---- CONFIGURATION ----
 st.set_page_config(page_title="Atmosphere", page_icon="🌍", layout="wide")
@@ -168,6 +169,10 @@ elif page == "Circles":
     else:
         st.info("No available circles.")
 # ---- EXPLORE ----
+
+elif page == "Explore":
+    explore()  # Call the function properly
+# ---- EXPLORE ----
 def explore():
     st.title("🔍 Explore Events")
 
@@ -206,7 +211,6 @@ def explore():
 
 
 
-# ---- REPORTING CONTENT ----
 elif page == "Settings":
     st.title("🚨 Report Content")
     report_content = st.text_area("Describe the issue")
