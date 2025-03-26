@@ -169,28 +169,24 @@ elif page == "Circles":
     else:
         st.info("No available circles.")
 # ---- EXPLORE ----
-
-elif page == "Explore":
-    explore()  # Call the function properly
-# ---- EXPLORE ----
+# ---- EXPLORE FUNCTION ----
 def explore():
     st.title("🔍 Explore Events")
-
+    
     # Random event notifications
     event_notifications = [
         "🎶 Live Jazz Night at Central Park!",
-        "📢 Tech Conference at Innovation Hub!",
+        "👉 Tech Conference at Innovation Hub!",
         "🍕 Food Festival at Downtown Plaza!",
         "🚴‍♂️ Cycling Marathon - Sign Up Now!",
         "🎨 Art Exhibition - Free Entry This Week!"
     ]
     random_event = random.choice(event_notifications)
     st.info(f"**Event Notification:** {random_event}")
-
+    
     # Search bar with common keywords
-    common_keywords = ["music", "tech", "food", "sports", "art"]
     search_query = st.text_input("Search for events (e.g., music, tech, food, sports, art)").lower()
-
+    
     # Event recommendations
     all_events = [
         {"name": "Music Fest", "location": "Central Park", "category": "music"},
@@ -199,26 +195,37 @@ def explore():
         {"name": "Sports Championship", "location": "City Stadium", "category": "sports"},
         {"name": "Art & Craft Fair", "location": "Gallery Hall", "category": "art"}
     ]
-
+    
     # Filter events based on search query
     filtered_events = [
-        event for event in all_events if any(word in event["category"] for word in search_query.split())
+        event for event in all_events if search_query in event["category"]
     ] if search_query else all_events
-
+    
     st.subheader("🎯 Recommended for You")
     for event in filtered_events:
         st.write(f"📍 **{event['name']}** - {event['location']} ({event['category'].capitalize()})")
 
+# ---- SIDEBAR NAVIGATION ----
+st.sidebar.image("https://via.placeholder.com/100", width=80)
+st.sidebar.title("📍 Navigation")
+page = st.sidebar.radio("Go to", ["Home", "Explore", "Settings"])
 
+# ---- PAGE ROUTES ----
+if page == "Explore":
+    explore()
 
-elif page == "Settings":
+   elif page == "Settings":
     st.title("🚨 Report Content")
     report_content = st.text_area("Describe the issue")
     report_btn = st.button("Submit Report")
-
+    
     if report_btn:
         reports = load_data(REPORT_DB)
-        reports.append({"user": st.session_state["user"], "report": report_content, "timestamp": datetime.now().isoformat()})
+        reports.append({
+            "user": st.session_state.get("user", "Anonymous"),
+            "report": report_content,
+            "timestamp": datetime.now().isoformat()
+        })
         save_data(REPORT_DB, reports)
         st.success("Report submitted successfully!")
 
