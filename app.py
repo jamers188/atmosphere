@@ -43,7 +43,7 @@ if page == "Home":
     st.subheader("Explore locations, join circles, and engage with events!")
 
     # Main Sections
-    st.write("### Explore Nearby")
+
     st.image("https://via.placeholder.com/600x300", use_container_width=True)
 
     st.write("### Your Circles")
