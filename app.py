@@ -3,29 +3,29 @@ import bcrypt
 import json
 import os
 
-# File to store users
+# File to store users & circles
 USER_DB = "users.json"
+CIRCLE_DB = "circles.json"
 
-# Ensure user database file exists
-if not os.path.exists(USER_DB):
-    with open(USER_DB, "w") as f:
-        json.dump({}, f)
+# Ensure user database and circles file exist
+for file in [USER_DB, CIRCLE_DB]:
+    if not os.path.exists(file):
+        with open(file, "w") as f:
+            json.dump({}, f)
 
-# Load users from file
-def load_users():
-    with open(USER_DB, "r") as f:
+# Load & Save JSON Data
+def load_data(file):
+    with open(file, "r") as f:
         return json.load(f)
 
-# Save users to file
-def save_users(users):
-    with open(USER_DB, "w") as f:
-        json.dump(users, f)
+def save_data(file, data):
+    with open(file, "w") as f:
+        json.dump(data, f)
 
-# Hash password
+# Hash & Verify Passwords
 def hash_password(password):
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
-# Verify password
 def verify_password(password, hashed):
     return bcrypt.checkpw(password.encode(), hashed.encode())
 
@@ -35,20 +35,13 @@ st.set_page_config(page_title="Atmosphere", page_icon="🌍", layout="wide")
 # Sidebar Navigation
 st.sidebar.image("https://via.placeholder.com/150", width=80)
 st.sidebar.title("📍 Navigation")
-page = st.sidebar.radio("Go to", ["Home", "Search", "Profile", "Log In", "Sign Up"])
+page = st.sidebar.radio("Go to", ["Home", "Search", "Profile", "Upload Media", "Circles", "Log In", "Sign Up"])
 
 # --- Home Page ---
 if page == "Home":
     st.title("🏡 Welcome to Atmosphere")
     st.subheader("Explore locations, join circles, and engage with events!")
-
-    # Main Sections
-
     st.image("https://via.placeholder.com/600x300", use_container_width=True)
-
-    st.write("### Your Circles")
-    st.button("Create a Circle")
-    st.write("You haven't joined any circles yet.")
 
 # --- Search Page ---
 elif page == "Search":
@@ -73,12 +66,57 @@ elif page == "Search":
 # --- Profile Page ---
 elif page == "Profile":
     st.title("👤 User Profile")
-    st.write("Manage your account and settings.")
-
     if "user" in st.session_state:
         st.write(f"Logged in as: **{st.session_state['user']}**")
+        st.button("Log Out", on_click=lambda: st.session_state.pop("user", None))
     else:
         st.warning("You are not logged in.")
+
+# --- Upload Media Page ---
+elif page == "Upload Media":
+    if "user" not in st.session_state:
+        st.warning("You must be logged in to upload media.")
+    else:
+        st.title("📸 Upload Your Photo")
+        uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
+        location = st.text_input("Location (Where was this taken?)")
+        upload_btn = st.button("Upload")
+
+        if upload_btn and uploaded_file and location:
+            st.success(f"Image uploaded successfully for **{location}**!")
+
+# --- Circles Page ---
+elif page == "Circles":
+    st.title("👥 Your Circles")
+
+    if "user" not in st.session_state:
+        st.warning("Log in to join or create circles.")
+    else:
+        circles = load_data(CIRCLE_DB)
+
+        # Join a Circle
+        st.subheader("🔗 Join a Circle")
+        if circles:
+            selected_circle = st.selectbox("Select a Circle", list(circles.keys()))
+            if st.button("Join Circle"):
+                user = st.session_state["user"]
+                if user not in circles[selected_circle]["members"]:
+                    circles[selected_circle]["members"].append(user)
+                    save_data(CIRCLE_DB, circles)
+                    st.success(f"Joined **{selected_circle}**!")
+                else:
+                    st.info("You are already a member.")
+
+        # Create a Circle
+        st.subheader("➕ Create a New Circle")
+        new_circle = st.text_input("Circle Name")
+        if st.button("Create Circle"):
+            if new_circle and new_circle not in circles:
+                circles[new_circle] = {"members": [st.session_state["user"]]}
+                save_data(CIRCLE_DB, circles)
+                st.success(f"Circle **{new_circle}** created!")
+            elif new_circle in circles:
+                st.error("Circle name already exists!")
 
 # --- Log In Page ---
 elif page == "Log In":
@@ -88,7 +126,7 @@ elif page == "Log In":
     login_btn = st.button("Log In")
 
     if login_btn:
-        users = load_users()
+        users = load_data(USER_DB)
         if username in users and verify_password(password, users[username]["password"]):
             st.success(f"Welcome back, {username}!")
             st.session_state["user"] = username  # Store session
@@ -110,7 +148,7 @@ elif page == "Sign Up":
         if new_password != confirm_password:
             st.error("Passwords do not match!")
         else:
-            users = load_users()
+            users = load_data(USER_DB)
             if new_username in users:
                 st.error("Username already exists!")
             else:
@@ -120,9 +158,9 @@ elif page == "Sign Up":
                     "password": hash_password(new_password),
                     "account_type": account_type
                 }
-                save_users(users)
+                save_data(USER_DB, users)
                 st.success("Account created! You can now log in.")
 
 # Footer Navigation
 st.markdown("---")
-st.markdown("🏠 Home | 👥 Circles | 📍 Explore | 👤 Profile", unsafe_allow_html=True)
+st.markdown("🏠 Home | 👥 Circles | 📍 Explore | 📸 Upload Media | 👤 Profile", unsafe_allow_html=True)
