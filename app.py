@@ -4,13 +4,13 @@ import json
 import os
 import base64
 
-# Page Config
-st.set_page_config(page_title="Atmosphere", page_icon="🌍", layout="wide")
+# Set up page layout
+st.set_page_config(page_title="Atmosphere - Social Connect", page_icon="🏡", layout="wide")
 
-# Database Files
+# Database files
 USER_DB = "users.json"
 POSTS_DB = "posts.json"
-EVENTS_DB = "events.json"
+CIRCLES_DB = "circles.json"
 
 # Ensure database files exist
 def ensure_file(filename, default_data):
@@ -20,104 +20,62 @@ def ensure_file(filename, default_data):
 
 ensure_file(USER_DB, {})
 ensure_file(POSTS_DB, [])
-ensure_file(EVENTS_DB, [
-    {"title": "Tech Meetup", "date": "April 15, 2025", "location": "Downtown Hall"},
-    {"title": "Live Music Night", "date": "March 30, 2025", "location": "City Square"},
-    {"title": "Startup Pitching Event", "date": "April 22, 2025", "location": "Tech Park"},
-])
+ensure_file(CIRCLES_DB, {})
 
-# Load & Save Data
-def load_data(file):
-    with open(file, "r") as f:
+# Load & Save functions
+def load_json(filename):
+    with open(filename, "r") as f:
         return json.load(f)
 
-def save_data(file, data):
-    with open(file, "w") as f:
+def save_json(filename, data):
+    with open(filename, "w") as f:
         json.dump(data, f)
 
-# Password Functions
+# Password hashing & verification
 def hash_password(password):
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
 def verify_password(password, hashed):
     return bcrypt.checkpw(password.encode(), hashed.encode())
 
-# Sidebar Navigation
+# Sidebar updates
+def show_sidebar_updates():
+    st.sidebar.subheader("📢 Latest Updates")
+    posts = load_json(POSTS_DB)
+
+    if posts:
+        for post in reversed(posts[-5:]):  # Show last 5 posts
+            user = post.get("user", "Unknown User")
+            caption = post.get("caption", "No caption provided.")
+            image_data = post.get("image")
+
+            if image_data:
+                try:
+                    st.sidebar.image(base64.b64decode(image_data), caption=f"📸 {user}: {caption}", use_container_width=True)
+                except Exception:
+                    st.sidebar.warning(f"⚠️ Error loading image for {user}")
+            else:
+                st.sidebar.write(f"**{user}**: {caption}")
+    else:
+        st.sidebar.info("No updates yet!")
+
+# Navigation Menu (Sidebar)
 st.sidebar.image("https://via.placeholder.com/150", width=80)
 st.sidebar.title("📍 Navigation")
-page = st.sidebar.radio("Go to", ["Home", "Profile", "Upload Media", "Explore", "Upcoming Events", "Log In", "Sign Up"])
+page = st.sidebar.radio("Go to", ["Home", "Explore", "Profile", "Upload", "Circles", "Log In / Sign Up"])
 
 # --- Home Page ---
 if page == "Home":
-    st.title("🏡 Welcome to Atmosphere")
-    st.subheader("🌍 Connect, Share & Discover!")
-    
-    # Display recent uploads
-    st.subheader("📸 Recent Uploads")
-    posts = load_data(POSTS_DB)
-    
-    if posts:
-        for post in reversed(posts[-5:]):  # Show last 5 uploads
-            st.write(f"**{post['user']}** uploaded:")
-            if post.get("image"):
-                st.image(base64.b64decode(post["image"]), caption=post.get("caption", ""), use_container_width=True)
-            else:
-                st.write(post.get("caption", "No caption."))
-    else:
-        st.info("No uploads yet!")
-
-# --- Profile Page ---
-elif page == "Profile":
-    if "user" in st.session_state:
-        username = st.session_state["user"]
-        users = load_data(USER_DB)
-        
-        st.title(f"👤 {username}'s Profile")
-        st.write(f"**Account Type:** {users[username]['account_type']}")
-
-        # Display user uploads
-        st.subheader("📸 Your Uploads")
-        posts = load_data(POSTS_DB)
-        user_posts = [post for post in posts if post["user"] == username]
-        
-        if user_posts:
-            for post in reversed(user_posts):
-                st.write(f"**{username}** posted:")
-                if post.get("image"):
-                    st.image(base64.b64decode(post["image"]), caption=post.get("caption", ""), use_container_width=True)
-                else:
-                    st.write(post.get("caption", "No caption."))
-        else:
-            st.info("You haven't uploaded anything yet.")
-    else:
-        st.warning("You need to log in first.")
-
-# --- Upload Media Page ---
-elif page == "Upload Media":
-    if "user" in st.session_state:
-        st.title("📸 Upload Your Moments")
-        
-        uploaded_file = st.file_uploader("Choose an image", type=["png", "jpg", "jpeg"])
-        caption = st.text_area("Write a caption")
-
-        if st.button("Upload"):
-            if uploaded_file:
-                image_data = base64.b64encode(uploaded_file.getvalue()).decode("utf-8")
-                posts = load_data(POSTS_DB)
-                posts.append({"user": st.session_state["user"], "image": image_data, "caption": caption})
-                save_data(POSTS_DB, posts)
-                st.success("Image uploaded successfully!")
-                st.experimental_rerun()
-            else:
-                st.error("Please upload an image.")
-    else:
-        st.warning("You need to log in first.")
+    st.title("🏡 Atmosphere - Social Connect")
+    st.subheader("Explore locations, join circles, and engage with events!")
+    show_sidebar_updates()
 
 # --- Explore Page ---
 elif page == "Explore":
-    st.title("🔍 Explore Community Uploads")
-    posts = load_data(POSTS_DB)
+    st.title("🔍 Explore Recent Uploads & Circles")
 
+    st.subheader("📸 Recent Uploads")
+    posts = load_json(POSTS_DB)
     if posts:
         for post in reversed(posts):
             st.write(f"**{post['user']}** uploaded:")
@@ -125,63 +83,133 @@ elif page == "Explore":
                 st.image(base64.b64decode(post["image"]), caption=post.get("caption", ""), use_container_width=True)
             else:
                 st.write(post.get("caption", "No caption."))
-    else:
-        st.info("No posts yet!")
 
-# --- Upcoming Events Page ---
-elif page == "Upcoming Events":
-    st.title("🎉 Upcoming Events")
-    events = load_data(EVENTS_DB)
+    st.subheader("🌐 Explore Circles")
+    circles = load_json(CIRCLES_DB)
 
-    for event in events:
-        st.subheader(event["title"])
-        st.write(f"📅 Date: {event['date']}")
-        st.write(f"📍 Location: {event['location']}")
-        st.markdown("---")
+    if circles:
+        for circle_name, details in circles.items():
+            if st.button(f"Join {circle_name}"):
+                user = st.session_state.get("user", "Guest")
+                if user not in details["members"]:
+                    details["members"].append(user)
+                    save_json(CIRCLES_DB, circles)
+                    st.success(f"Joined Circle: {circle_name}!")
 
-# --- Log In Page ---
-elif page == "Log In":
-    st.title("🔑 Log In")
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
+    st.subheader("⭐ Recommended for You")
+    recommended_circles = ["Tech Enthusiasts", "Travel Lovers", "Foodies", "Fitness Gurus"]
+    for rec_circle in recommended_circles:
+        if st.button(f"Join {rec_circle}"):
+            st.success(f"Joined Circle: {rec_circle}!")
 
-    if st.button("Log In"):
-        users = load_data(USER_DB)
-        if username in users and verify_password(password, users[username]["password"]):
-            st.session_state["user"] = username
-            st.success(f"Welcome back, {username}!")
-            st.experimental_rerun()
-        else:
-            st.error("Invalid username or password!")
+# --- Profile Page ---
+elif page == "Profile":
+    if "user" in st.session_state:
+        username = st.session_state["user"]
+        users = load_json(USER_DB)
 
-# --- Sign Up Page ---
-elif page == "Sign Up":
-    st.title("🆕 Create an Account")
-    account_type = st.radio("Account Type", ["General User", "Business"])
-    new_username = st.text_input("Username")
-    email = st.text_input("Email")
-    new_password = st.text_input("Password", type="password")
-    confirm_password = st.text_input("Confirm Password", type="password")
+        if username in users:
+            user_data = users[username]
+            st.subheader(f"👤 @{username}'s Profile")
+            st.write(f"**Account Type:** {user_data['account_type']}")
+            st.write(f"**Followers:** {len(user_data.get('followers', []))}")
+            st.write(f"**Following:** {len(user_data.get('following', []))}")
 
-    if st.button("Sign Up"):
-        if new_password != confirm_password:
-            st.error("Passwords do not match!")
-        else:
-            users = load_data(USER_DB)
-            if new_username in users:
-                st.error("Username already exists!")
+            st.button("✏️ Edit Profile")
+
+            st.subheader("📸 My Posts")
+            posts = load_json(POSTS_DB)
+            user_posts = [post for post in posts if post["user"] == username]
+            if user_posts:
+                for post in reversed(user_posts):
+                    st.image(base64.b64decode(post["image"]), caption=post.get("caption", ""), use_container_width=True)
             else:
-                users[new_username] = {
-                    "email": email,
-                    "password": hash_password(new_password),
-                    "account_type": account_type,
-                }
-                save_data(USER_DB, users)
-                st.success("Account created! You can now log in.")
+                st.info("You haven't posted anything yet.")
+        else:
+            st.error("User not found!")
+    else:
+        st.warning("You need to log in first.")
 
-# Logout Button
+# --- Upload Page ---
+elif page == "Upload":
+    if "user" in st.session_state:
+        st.subheader("📸 Upload & Share Your Moments")
+        uploaded_file = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
+        caption = st.text_area("Write a caption")
+
+        if st.button("Upload"):
+            if uploaded_file:
+                image_data = base64.b64encode(uploaded_file.getvalue()).decode("utf-8")
+                posts = load_json(POSTS_DB)
+                posts.append({"user": st.session_state["user"], "image": image_data, "caption": caption})
+                save_json(POSTS_DB, posts)
+                st.success("Image uploaded successfully!")
+                st.experimental_rerun()
+            else:
+                st.error("Please upload an image.")
+    else:
+        st.warning("You need to log in first.")
+
+# --- Circles Page ---
+elif page == "Circles":
+    st.subheader("🌐 Join or Create Circles")
+
+    if "user" in st.session_state:
+        circles = load_json(CIRCLES_DB)
+
+        st.subheader("🔗 Join a Circle")
+        if circles:
+            selected_circle = st.selectbox("Select a Circle", list(circles.keys()))
+            if st.button("Join Circle"):
+                user = st.session_state["user"]
+                if user not in circles[selected_circle]["members"]:
+                    circles[selected_circle]["members"].append(user)
+                    save_json(CIRCLES_DB, circles)
+                    st.success(f"Joined Circle: {selected_circle}!")
+
+        st.subheader("➕ Create a New Circle")
+        new_circle = st.text_input("Circle Name")
+        if st.button("Create Circle"):
+            if new_circle and new_circle not in circles:
+                circles[new_circle] = {"members": [st.session_state["user"]]}
+                save_json(CIRCLES_DB, circles)
+                st.success(f"Circle *{new_circle}* created!")
+            elif new_circle in circles:
+                st.error("Circle name already exists!")
+    else:
+        st.warning("You need to log in first.")
+
+# --- Log In / Sign Up Page ---
+elif page == "Log In / Sign Up":
+    st.subheader("🔑 Log In or Sign Up")
+    choice = st.radio("Choose an option", ["Log In", "Sign Up"])
+
+    if choice == "Log In":
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+
+        if st.button("Log In"):
+            users = load_json(USER_DB)
+            if username in users and verify_password(password, users[username]["password"]):
+                st.session_state["user"] = username
+                st.success(f"Welcome back, {username}!")
+                st.experimental_rerun()
+            else:
+                st.error("Invalid username or password!")
+
+    elif choice == "Sign Up":
+        new_username = st.text_input("Choose a Username")
+        email = st.text_input("Email")
+        new_password = st.text_input("Password", type="password")
+
+        if st.button("Sign Up"):
+            users = load_json(USER_DB)
+            users[new_username] = {"email": email, "password": hash_password(new_password)}
+            save_json(USER_DB, users)
+            st.success("Account created! You can now log in.")
+
+# Logout
 if "user" in st.session_state:
-    if st.sidebar.button("Log Out"):
+    if st.button("Log Out"):
         del st.session_state["user"]
         st.experimental_rerun()
-
