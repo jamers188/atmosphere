@@ -1,10 +1,12 @@
 import streamlit as st
 import sqlite3
 import pandas as pd
+import os
 
-# Connect to database
-conn = sqlite3.connect("data/atmosphere.db", check_same_thread=False)
-cursor = conn.cursor()
+# Use Streamlit’s temporary directory
+temp_db_path = os.path.join(st.session_state.get("temp_dir", "/tmp"), "atmosphere.db")
+
+conn = sqlite3.connect(temp_db_path, check_same_thread=False)
 
 # Fetch posts from DB
 def get_posts():
