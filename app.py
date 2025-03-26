@@ -92,6 +92,70 @@ elif page == "Your Circles":
     st.info("You haven't joined any circles yet.")
 
     st.write("#### Recommended For You")
+locations = [
+    {"name": "Downtown Cafe", "type": "Location"},
+    {"name": "Sunset Beach", "type": "Location"},
+    {"name": "Green Park", "type": "Location"},
+    {"name": "Mountain View Resort", "type": "Location"},
+    {"name": "City Library", "type": "Location"},
+]
+
+circles = [
+    {"name": "Coffee Lovers", "type": "Circle"},
+    {"name": "Biking Club", "type": "Circle"},
+    {"name": "Grand Hotel Guests", "type": "Circle"},
+    {"name": "Photography Enthusiasts", "type": "Circle"},
+    {"name": "Local Foodies", "type": "Circle"},
+]
+
+events = [
+    {"name": "Live Music Night", "type": "Event"},
+    {"name": "Bike Marathon", "type": "Event"},
+    {"name": "Food Festival", "type": "Event"},
+    {"name": "Tech Meetup", "type": "Event"},
+    {"name": "Yoga in the Park", "type": "Event"},
+]
+
+businesses = [
+    {"name": "Grand Hotel", "type": "Business"},
+    {"name": "Green Park Café", "type": "Business"},
+    {"name": "City Gym", "type": "Business"},
+    {"name": "Tech Hub Co-working", "type": "Business"},
+    {"name": "Sunset Spa", "type": "Business"},
+]
+
+# Combine all searchable items
+search_data = locations + circles + events + businesses
+
+# Search Page
+def search_page():
+    st.title("🔍 Search Locations, Circles, Events & Businesses")
+    
+    # Search input
+    query = st.text_input("Type a name to search:")
+
+    if query:
+        results = [item for item in search_data if query.lower() in item["name"].lower()]
+        
+        if results:
+            st.write("### 🔎 Search Results:")
+            for item in results:
+                st.write(f"**{item['name']}** ({item['type']})")
+        else:
+            st.write("❌ No results found.")
+
+# Sidebar Navigation
+st.sidebar.title("📍 Navigation")
+page = st.sidebar.radio("Go to", ["Home", "Search", "Profile"])
+
+if page == "Home":
+    st.title("🏡 Welcome to Atmosphere")
+    st.write("Explore locations, join circles, and engage with events!")
+elif page == "Search":
+    search_page()
+elif page == "Profile":
+    st.title("👤 User Profile")
+    st.write("Manage your account and settings.")
     st.warning("No circles found for this filter.")
 
     st.markdown("---")
