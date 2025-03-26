@@ -4,6 +4,36 @@ import json
 import os
 import random
 from datetime import datetime
+import streamlit as st
+import base64
+
+# Initialize session state storage for images
+if "images" not in st.session_state:
+    st.session_state.images = []
+
+st.title("Image Upload & Permanent Storage")
+
+# Upload Image
+uploaded_file = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
+
+if uploaded_file is not None:
+    # Convert the uploaded file to base64 string
+    image_data = base64.b64encode(uploaded_file.getvalue()).decode("utf-8")
+    
+    # Store image data along with the filename
+    st.session_state.images.append({"name": uploaded_file.name, "data": image_data})
+
+    st.success(f"Uploaded successfully: {uploaded_file.name}")
+
+# Display all uploaded images
+st.subheader("Uploaded Images")
+
+if st.session_state.images:
+    for img in reversed(st.session_state.images):  # Show latest first
+        st.image(base64.b64decode(img["data"]), caption=img["name"], use_container_width=True)
+else:
+    st.write("No images uploaded yet.")
+
 
 # File to store users and posts
 USER_DB = "users.json"
