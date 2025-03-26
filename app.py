@@ -126,7 +126,7 @@ elif page == "Upload Media":
     else:
         st.warning("Please log in to upload media.")
 
-# ---- IN-APP GALLERY ----
+    # ---- IN-APP GALLERY ----
     st.subheader("📂 Your Media Gallery")
     media_data = load_data(MEDIA_DB)
     user_media = [m for m in media_data if m["user"] == st.session_state.get("user")]
@@ -168,12 +168,11 @@ elif page == "Circles":
             st.success(f"Joined {selected_circle}!")
     else:
         st.info("No available circles.")
-# ---- EXPLORE ----
+
 # ---- EXPLORE FUNCTION ----
 def explore():
     st.title("🔍 Explore Events")
     
-    # Random event notifications
     event_notifications = [
         "🎶 Live Jazz Night at Central Park!",
         "👉 Tech Conference at Innovation Hub!",
@@ -184,10 +183,8 @@ def explore():
     random_event = random.choice(event_notifications)
     st.info(f"**Event Notification:** {random_event}")
     
-    # Search bar with common keywords
     search_query = st.text_input("Search for events (e.g., music, tech, food, sports, art)").lower()
     
-    # Event recommendations
     all_events = [
         {"name": "Music Fest", "location": "Central Park", "category": "music"},
         {"name": "Tech Meetup", "location": "Tech Hub", "category": "tech"},
@@ -196,29 +193,21 @@ def explore():
         {"name": "Art & Craft Fair", "location": "Gallery Hall", "category": "art"}
     ]
     
-    # Filter events based on search query
-    filtered_events = [
-        event for event in all_events if search_query in event["category"]
-    ] if search_query else all_events
+    filtered_events = [event for event in all_events if search_query in event["category"]] if search_query else all_events
     
     st.subheader("🎯 Recommended for You")
     for event in filtered_events:
         st.write(f"📍 **{event['name']}** - {event['location']} ({event['category'].capitalize()})")
 
-# ---- SIDEBAR NAVIGATION ----
-st.sidebar.image("https://via.placeholder.com/100", width=80)
-st.sidebar.title("📍 Navigation")
-page = st.sidebar.radio("Go to", ["Home", "Explore", "Settings"])
-
 # ---- PAGE ROUTES ----
 if page == "Explore":
     explore()
 
-   elif page == "Settings":
+elif page == "Settings":
     st.title("🚨 Report Content")
     report_content = st.text_area("Describe the issue")
     report_btn = st.button("Submit Report")
-    
+
     if report_btn:
         reports = load_data(REPORT_DB)
         reports.append({
@@ -229,22 +218,3 @@ if page == "Explore":
         save_data(REPORT_DB, reports)
         st.success("Report submitted successfully!")
 
-# ---- BUSINESS PANEL ----
-elif page == "Business":
-    st.title("💼 Business Panel")
-
-    if st.session_state.get("account_type") == "Business":
-        st.subheader("📢 Create Promotion")
-        media_count = st.number_input("Number of Media Posts", min_value=1)
-        discount_offer = st.text_input("Enter Offer (e.g., '40% Off')")
-
-        if st.button("Create Promotion"):
-            promotions = load_data(PROMO_DB)
-            promotions.append({"posts": media_count, "offer": discount_offer})
-            save_data(PROMO_DB, promotions)
-            st.success(f"Promotion Created!")
-    else:
-        st.warning("Business accounts only.")
-
-st.markdown("---")
-st.markdown("🏠 Home | 👥 Circles | 📍 Explore | 📸 Upload Media | 👤 Profile", unsafe_allow_html=True)
