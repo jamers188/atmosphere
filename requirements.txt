@@ -2,8 +2,7 @@ streamlit
 pandas
 pillow
 bcrypt
-json
-os
+
 
 
 
