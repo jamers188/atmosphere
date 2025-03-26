@@ -3,10 +3,7 @@ import bcrypt
 import json
 import os
 
-# Set page configuration
-st.set_page_config(page_title="Atmosphere", page_icon="🌍", layout="wide")
-
-# --- USER DATABASE HANDLING ---
+# File to store users
 USER_DB = "users.json"
 
 # Ensure user database file exists
@@ -14,88 +11,76 @@ if not os.path.exists(USER_DB):
     with open(USER_DB, "w") as f:
         json.dump({}, f)
 
+# Load users from file
 def load_users():
     with open(USER_DB, "r") as f:
         return json.load(f)
 
+# Save users to file
 def save_users(users):
     with open(USER_DB, "w") as f:
-        json.dump(users, f, indent=4)
+        json.dump(users, f)
 
+# Hash password
 def hash_password(password):
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
+# Verify password
 def verify_password(password, hashed):
     return bcrypt.checkpw(password.encode(), hashed.encode())
 
-# --- SESSION MANAGEMENT ---
-if "user" not in st.session_state:
-    st.session_state["user"] = None
+# Streamlit App Config
+st.set_page_config(page_title="Atmosphere", page_icon="🌍", layout="wide")
 
-# --- NAVIGATION ---
-st.sidebar.title("📍 Atmosphere")
-page = st.sidebar.radio("Navigate", ["Home", "Search", "Your Circles", "Log In", "Sign Up"])
+# Sidebar Navigation
+st.sidebar.image("https://via.placeholder.com/150", width=80)
+st.sidebar.title("📍 Navigation")
+page = st.sidebar.radio("Go to", ["Home", "Search", "Profile", "Log In", "Sign Up"])
 
-# --- SEARCH FUNCTIONALITY ---
-locations = [
-    {"name": "Downtown Cafe", "type": "Location"},
-    {"name": "Sunset Beach", "type": "Location"},
-    {"name": "Green Park", "type": "Location"},
-    {"name": "Mountain View Resort", "type": "Location"},
-    {"name": "City Library", "type": "Location"},
-]
+# --- Home Page ---
+if page == "Home":
+    st.title("🏡 Welcome to Atmosphere")
+    st.subheader("Explore locations, join circles, and engage with events!")
 
-circles = [
-    {"name": "Coffee Lovers", "type": "Circle"},
-    {"name": "Biking Club", "type": "Circle"},
-    {"name": "Grand Hotel Guests", "type": "Circle"},
-    {"name": "Photography Enthusiasts", "type": "Circle"},
-    {"name": "Local Foodies", "type": "Circle"},
-]
+    # Main Sections
+    st.write("### Explore Nearby")
+    st.image("https://via.placeholder.com/600x300", use_container_width=True)
 
-events = [
-    {"name": "Live Music Night", "type": "Event"},
-    {"name": "Bike Marathon", "type": "Event"},
-    {"name": "Food Festival", "type": "Event"},
-    {"name": "Tech Meetup", "type": "Event"},
-    {"name": "Yoga in the Park", "type": "Event"},
-]
+    st.write("### Your Circles")
+    st.button("Create a Circle")
+    st.write("You haven't joined any circles yet.")
 
-businesses = [
-    {"name": "Grand Hotel", "type": "Business"},
-    {"name": "Green Park Café", "type": "Business"},
-    {"name": "City Gym", "type": "Business"},
-    {"name": "Tech Hub Co-working", "type": "Business"},
-    {"name": "Sunset Spa", "type": "Business"},
-]
-
-search_data = locations + circles + events + businesses
-
-def search_page():
+# --- Search Page ---
+elif page == "Search":
     st.title("🔍 Search Locations, Circles, Events & Businesses")
-    query = st.text_input("Enter a name to search:")
+    search_query = st.text_input("Type a name to search:")
     
-    if query:
-        results = [item for item in search_data if query.lower() in item["name"].lower()]
+    search_data = [
+        {"name": "Downtown Cafe", "type": "Location"},
+        {"name": "Coffee Lovers", "type": "Circle"},
+        {"name": "Live Music Night", "type": "Event"},
+        {"name": "Grand Hotel", "type": "Business"},
+    ]
+
+    if search_query:
+        results = [item for item in search_data if search_query.lower() in item["name"].lower()]
         if results:
-            st.write("### 🔎 Search Results:")
             for item in results:
                 st.write(f"**{item['name']}** ({item['type']})")
         else:
-            st.warning("No results found.")
+            st.write("❌ No results found.")
 
-# --- HOME PAGE ---
-if page == "Home":
-    st.title("🏡 Welcome to Atmosphere")
-    st.subheader("Share your world, where you are")
-    st.image("https://via.placeholder.com/800x300", use_column_width=True)  # Placeholder banner
+# --- Profile Page ---
+elif page == "Profile":
+    st.title("👤 User Profile")
+    st.write("Manage your account and settings.")
 
-    if st.session_state["user"]:
-        st.success(f"Welcome back, {st.session_state['user']}!")
+    if "user" in st.session_state:
+        st.write(f"Logged in as: **{st.session_state['user']}**")
     else:
-        st.info("Log in or sign up to explore Atmosphere.")
+        st.warning("You are not logged in.")
 
-# --- LOG IN PAGE ---
+# --- Log In Page ---
 elif page == "Log In":
     st.title("🔑 Log In")
     username = st.text_input("Username")
@@ -110,7 +95,7 @@ elif page == "Log In":
         else:
             st.error("Invalid username or password!")
 
-# --- SIGN UP PAGE ---
+# --- Sign Up Page ---
 elif page == "Sign Up":
     st.title("🆕 Create an Account")
     account_type = st.radio("Account Type", ["General User", "Business"])
@@ -119,7 +104,7 @@ elif page == "Sign Up":
     email = st.text_input("Email")
     new_password = st.text_input("Password", type="password")
     confirm_password = st.text_input("Confirm Password", type="password")
-    signup_btn = st.button("Sign Up")
+    signup_btn = st.button("Create Account")
 
     if signup_btn:
         if new_password != confirm_password:
@@ -138,27 +123,6 @@ elif page == "Sign Up":
                 save_users(users)
                 st.success("Account created! You can now log in.")
 
-# --- CIRCLES PAGE ---
-elif page == "Your Circles":
-    st.title("👥 Your Circles")
-    
-    st.text_input("🔎 Search circles...")
-    st.button("➕ Create a Circle")
-
-    st.write("### My Circles")
-    st.warning("You haven't joined any circles yet.")
-
-    st.write("### Recommended Circles")
-    for circle in circles[:3]:  # Show top 3 recommended circles
-        st.write(f"🔹 **{circle['name']}**")
-
-# --- SEARCH PAGE ---
-elif page == "Search":
-    search_page()
-
-# --- FOOTER NAVIGATION ---
+# Footer Navigation
 st.markdown("---")
-st.markdown(
-    '<p style="text-align:center;">🏠 Home | 👥 Circles | 📍 Explore | 👤 Profile</p>',
-    unsafe_allow_html=True
-)
+st.markdown("🏠 Home | 👥 Circles | 📍 Explore | 👤 Profile", unsafe_allow_html=True)
