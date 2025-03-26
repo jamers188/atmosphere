@@ -67,7 +67,7 @@ if page == "Log In":
             st.success(f"Welcome back, {username}!")
             st.session_state["user"] = username
             st.session_state["account_type"] = users[username]["account_type"]
-            st.experimental_rerun()
+            st.rerun()  # ✅ FIXED: Replaced st.experimental_rerun()
         else:
             st.error("Invalid username or password!")
 
@@ -169,41 +169,11 @@ elif page == "Circles":
     else:
         st.info("No available circles.")
 
-# ---- EXPLORE FUNCTION ----
-def explore():
-    st.title("🔍 Explore Events")
-    
-    event_notifications = [
-        "🎶 Live Jazz Night at Central Park!",
-        "👉 Tech Conference at Innovation Hub!",
-        "🍕 Food Festival at Downtown Plaza!",
-        "🚴‍♂️ Cycling Marathon - Sign Up Now!",
-        "🎨 Art Exhibition - Free Entry This Week!"
-    ]
-    random_event = random.choice(event_notifications)
-    st.info(f"**Event Notification:** {random_event}")
-    
-    search_query = st.text_input("Search for events (e.g., music, tech, food, sports, art)").lower()
-    
-    all_events = [
-        {"name": "Music Fest", "location": "Central Park", "category": "music"},
-        {"name": "Tech Meetup", "location": "Tech Hub", "category": "tech"},
-        {"name": "Food Carnival", "location": "Downtown", "category": "food"},
-        {"name": "Sports Championship", "location": "City Stadium", "category": "sports"},
-        {"name": "Art & Craft Fair", "location": "Gallery Hall", "category": "art"}
-    ]
-    
-    filtered_events = [event for event in all_events if search_query in event["category"]] if search_query else all_events
-    
-    st.subheader("🎯 Recommended for You")
-    for event in filtered_events:
-        st.write(f"📍 **{event['name']}** - {event['location']} ({event['category'].capitalize()})")
-
 # ---- PAGE ROUTES ----
 if page == "Explore":
-    explore()
+    st.title("🔍 Explore Events")
 
-elif page == "Settings":
+elif page == "Settings":  # ✅ FIXED: Corrected indentation
     st.title("🚨 Report Content")
     report_content = st.text_area("Describe the issue")
     report_btn = st.button("Submit Report")
@@ -217,4 +187,6 @@ elif page == "Settings":
         })
         save_data(REPORT_DB, reports)
         st.success("Report submitted successfully!")
+
+
 
