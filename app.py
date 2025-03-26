@@ -1,15 +1,11 @@
 import streamlit as st
 
-st.sidebar.title("📌 Navigation")
-page = st.sidebar.radio("Go to", ["Home", "Profile", "Circles", "Business", "Analytics"])
+st.title("Atmosphere")
+st.subheader("Share your world, where you are")
 
-if page == "Home":
-    from pages import home
-elif page == "Profile":
-    from pages import profile
-elif page == "Circles":
-    from pages import circles
-elif page == "Business":
-    from pages import business
-elif page == "Analytics":
-    from pages import analytics
+st.text_input("Username", placeholder="Enter your username")
+st.text_input("Password", type="password", placeholder="Enter your password")
+
+if st.button("Log In"):
+    st.success("Logged in successfully!")
+
