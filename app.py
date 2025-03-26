@@ -167,6 +167,44 @@ elif page == "Circles":
             st.success(f"Joined {selected_circle}!")
     else:
         st.info("No available circles.")
+# ---- EXPLORE ----
+def explore():
+    st.title("🔍 Explore Events")
+
+    # Random event notifications
+    event_notifications = [
+        "🎶 Live Jazz Night at Central Park!",
+        "📢 Tech Conference at Innovation Hub!",
+        "🍕 Food Festival at Downtown Plaza!",
+        "🚴‍♂️ Cycling Marathon - Sign Up Now!",
+        "🎨 Art Exhibition - Free Entry This Week!"
+    ]
+    random_event = random.choice(event_notifications)
+    st.info(f"**Event Notification:** {random_event}")
+
+    # Search bar with common keywords
+    common_keywords = ["music", "tech", "food", "sports", "art"]
+    search_query = st.text_input("Search for events (e.g., music, tech, food, sports, art)").lower()
+
+    # Event recommendations
+    all_events = [
+        {"name": "Music Fest", "location": "Central Park", "category": "music"},
+        {"name": "Tech Meetup", "location": "Tech Hub", "category": "tech"},
+        {"name": "Food Carnival", "location": "Downtown", "category": "food"},
+        {"name": "Sports Championship", "location": "City Stadium", "category": "sports"},
+        {"name": "Art & Craft Fair", "location": "Gallery Hall", "category": "art"}
+    ]
+
+    # Filter events based on search query
+    filtered_events = [
+        event for event in all_events if any(word in event["category"] for word in search_query.split())
+    ] if search_query else all_events
+
+    st.subheader("🎯 Recommended for You")
+    for event in filtered_events:
+        st.write(f"📍 **{event['name']}** - {event['location']} ({event['category'].capitalize()})")
+
+
 
 # ---- REPORTING CONTENT ----
 elif page == "Settings":
