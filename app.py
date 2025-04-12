@@ -426,22 +426,13 @@ def media_page():
     
     with tab1:
         st.subheader("Upload New Media")
-        
-        # Camera capture
         captured_photo = st.camera_input("Take a photo")
-        
-        # Location selection
         location = st.text_input("Location", "Central Park, NYC")
-        
-        # Circle selection
         circles = ["NYC Photographers", "Food Lovers", "Tech Enthusiasts"]
         selected_circle = st.selectbox("Share to Circle (optional)", [""] + circles)
-        
-        # Tags
         tags = st.multiselect("Tags", ["Nature", "Food", "Tech", "Art", "Sports"])
         
         if st.button("Upload Media") and captured_photo:
-            # Save media
             media_id = generate_id("med")
             filename = f"{st.session_state['user']['user_id']}_{media_id}.jpg"
             filepath = os.path.join(MEDIA_DIR, filename)
@@ -449,7 +440,6 @@ def media_page():
             image = Image.open(captured_photo)
             image.save(filepath)
             
-            # Add to database
             media = load_db("media")
             media.append({
                 "media_id": media_id,
@@ -462,19 +452,10 @@ def media_page():
                 "reports": []
             })
             save_db("media", media)
-            
             st.success("Media uploaded successfully!")
-            
-            # Check if this qualifies for any promotions
-            promotions = load_db("promotions")
-            for promo_id, promo in promotions.items():
-                if any(tag.lower() in [t.lower() for t in tags] for tag in promo.get("tags", [])):
-                    add_notification(st.session_state["user"]["user_id"], "promotion", 
-                                    f"Your photo qualifies for {promo['offer']} from {promo_id}!")
     
     with tab2:
         st.subheader("Your Media Gallery")
-        # Display user's media
         media = load_db("media")
         user_media = [m for m in media if m["user_id"] == st.session_state["user"]["user_id"]]
         
@@ -484,7 +465,7 @@ def media_page():
             cols = st.columns(3)
             for i, item in enumerate(user_media):
                 with cols[i % 3]:
-                    st.image(item["file_path"], use_column_width=True)
+                    st.image(item["file_path"], use_container_width=True)  # Updated here
                     st.caption(f"{item['location']['name']} • {datetime.fromisoformat(item['timestamp']).strftime('%b %d, %Y')}")
                     st.write(f"Tags: {', '.join(item['tags'])}")
 
