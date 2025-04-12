@@ -205,7 +205,7 @@ def login():
                     st.error("Invalid username or password")
 
     with col2:
-        st.image("https://via.placeholder.com/500x300?text=Atmosphere+Community", use_column_width=True)
+        st.image("https://via.placeholder.com/500x300?text=Atmosphere+Community", use_container_width=True)
         st.markdown("""
         **New to Atmosphere?**
         - Connect with like-minded people
@@ -387,9 +387,8 @@ def explore_page():
     
     # Map view
     st.subheader("📍 Nearby Locations")
-    # In a real app, this would be a map component
     st.image("https://maps.googleapis.com/maps/api/staticmap?center=40.7128,-74.0060&zoom=12&size=800x300&key=YOUR_API_KEY", 
-             caption="Map of nearby locations with Atmosphere activity")
+             use_container_width=True, caption="Map of nearby locations with Atmosphere activity")
     
     # Popular circles
     st.subheader("👥 Popular Circles")
@@ -407,9 +406,9 @@ def explore_page():
     # Upcoming events
     st.subheader("📅 Upcoming Events")
     events = [
-        {"name": "Central Park Picnic", "date": "Jun 15", "circle": "NYC Photographers"},
-        {"name": "Food Festival", "date": "Jun 20", "circle": "Food Lovers"},
-        {"name": "Tech Conference", "date": "Jul 2", "circle": "Tech Enthusiasts"}
+        {"name": "Central Park Picnic", "date": "Jun 15", "location": "Central Park", "circle": "NYC Photographers"},
+        {"name": "Food Festival", "date": "Jun 20", "location": "Downtown", "circle": "Food Lovers"},
+        {"name": "Tech Conference", "date": "Jul 2", "location": "Innovation Center", "circle": "Tech Enthusiasts"}
     ]
     for event in events:
         st.markdown(f"""
@@ -426,13 +425,22 @@ def media_page():
     
     with tab1:
         st.subheader("Upload New Media")
+        
+        # Camera capture
         captured_photo = st.camera_input("Take a photo")
+        
+        # Location selection
         location = st.text_input("Location", "Central Park, NYC")
+        
+        # Circle selection
         circles = ["NYC Photographers", "Food Lovers", "Tech Enthusiasts"]
         selected_circle = st.selectbox("Share to Circle (optional)", [""] + circles)
+        
+        # Tags
         tags = st.multiselect("Tags", ["Nature", "Food", "Tech", "Art", "Sports"])
         
         if st.button("Upload Media") and captured_photo:
+            # Save media
             media_id = generate_id("med")
             filename = f"{st.session_state['user']['user_id']}_{media_id}.jpg"
             filepath = os.path.join(MEDIA_DIR, filename)
@@ -440,6 +448,7 @@ def media_page():
             image = Image.open(captured_photo)
             image.save(filepath)
             
+            # Add to database
             media = load_db("media")
             media.append({
                 "media_id": media_id,
@@ -452,10 +461,19 @@ def media_page():
                 "reports": []
             })
             save_db("media", media)
+            
             st.success("Media uploaded successfully!")
+            
+            # Check if this qualifies for any promotions
+            promotions = load_db("promotions")
+            for promo_id, promo in promotions.items():
+                if any(tag.lower() in [t.lower() for t in tags] for tag in promo.get("tags", [])):
+                    add_notification(st.session_state["user"]["user_id"], "promotion", 
+                                    f"Your photo qualifies for {promo['offer']} from {promo_id}!")
     
     with tab2:
         st.subheader("Your Media Gallery")
+        # Display user's media
         media = load_db("media")
         user_media = [m for m in media if m["user_id"] == st.session_state["user"]["user_id"]]
         
@@ -465,7 +483,7 @@ def media_page():
             cols = st.columns(3)
             for i, item in enumerate(user_media):
                 with cols[i % 3]:
-                    st.image(item["file_path"], use_container_width=True)  # Updated here
+                    st.image(item["file_path"], use_container_width=True)
                     st.caption(f"{item['location']['name']} • {datetime.fromisoformat(item['timestamp']).strftime('%b %d, %Y')}")
                     st.write(f"Tags: {', '.join(item['tags'])}")
 
@@ -735,7 +753,7 @@ def settings_page():
             content_type = st.selectbox("Content Type", ["Media", "Circle", "Event", "User"])
             content_id = st.text_input("Content ID/URL")
             reason = st.selectbox("Reason", 
-                                 ["Inappropriate content", "Spam", "Misinformation", "Harassment", "Other"])
+                                ["Inappropriate content", "Spam", "Misinformation", "Harassment", "Other"])
             details = st.text_area("Additional Details")
             
             if st.form_submit_button("Submit Report"):
@@ -774,7 +792,7 @@ def notification_bell():
 def main():
     # Sidebar navigation
     with st.sidebar:
-        st.image("https://via.placeholder.com/150x50?text=Atmosphere", width=150)
+        st.image("https://via.placeholder.com/150x50?text=Atmosphere", use_container_width=True)
         st.markdown("---")
         
         if "logged_in" in st.session_state:
