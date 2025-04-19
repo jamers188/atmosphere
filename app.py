@@ -1134,19 +1134,19 @@ def events_page():
         else:        
             for event in upcoming_events:
                 event_details = f"""
-                <p><strong>📅 Date:</strong> {event['date']} at {event['time']}</p>
-                <p><strong>📍 Location:</strong> {event['location']}</p>
-                <p><strong>👥 Attendees:</strong> {event['attendees']}/{event['capacity']}</p>
-                <p><strong>🎫 Organizer:</strong> {event['organizer']}</p>
-                <p>{event['description']}</p>
+                <p style="color: #333333; margin: 5px 0;"><strong>📅 Date:</strong> {event['date']} at {event['time']}</p>
+                <p style="color: #333333; margin: 5px 0;"><strong>📍 Location:</strong> {event['location']}</p>
+                <p style="color: #333333; margin: 5px 0;"><strong>👥 Attendees:</strong> {event['attendees']}/{event['capacity']}</p>
+                <p style="color: #333333; margin: 5px 0;"><strong>🎫 Organizer:</strong> {event['organizer']}</p>
+                <p style="color: #333333; margin: 10px 0;">{event['description']}</p>
                 """
-    
+                
                 col1, col2 = st.columns([3, 1])
                 with col1:
                     st.markdown(f"""
-                    <div class="card">
-                        <div class="card-title">{event['name']}</div>
-                        <div class="card-content">{event_details}</div>
+                    <div class="card" style="background-color: #f8f9fa; border: 1px solid #dee2e6;">
+                        <div class="card-title" style="color: #212529; font-weight: bold; font-size: 1.2rem; margin-bottom: 10px;">{event['name']}</div>
+                        <div class="card-content" style="color: #333333;">{event_details}</div>
                     </div>
                     """, unsafe_allow_html=True)
                 
@@ -1156,19 +1156,18 @@ def events_page():
                             st.image(event['image'], use_container_width=True)
                     except Exception as e:
                         st.warning(f"Could not load image: {str(e)}")
-    
+                
                 # View Details button with expanded details
                 if st.button(f"View Details for {event['name']}", key=f"details_{event['name']}"):
-                    st.markdown(event['details'], unsafe_allow_html=True)
-    
+                    st.markdown(event['details'].replace('<p>', '<p style="color: #333333;">'), unsafe_allow_html=True)
+                
                 # RSVP button
                 if st.button("RSVP", key=f"rsvp_{event['name']}"):
                     st.success(f"You've RSVP'd to {event['name']}!")
                     time.sleep(1)
                     st.rerun()
-    
+                
                 st.markdown("---")
-    
     with tab2:
         st.subheader("Your Events")
         
