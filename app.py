@@ -1131,17 +1131,16 @@ def events_page():
         
         if not upcoming_events:
             st.info("No upcoming events at the moment. Check back later!")
-        else:
+        else:        
             for event in upcoming_events:
                 event_details = f"""
-                **📅 Date:** {event['date']} at {event['time']}  
-                **📍 Location:** {event['location']}  
-                **👥 Attendees:** {event['attendees']}/{event['capacity']}  
-                **🎫 Organizer:** {event['organizer']}  
-                
-                {event['description']}
+                <p><strong>📅 Date:</strong> {event['date']} at {event['time']}</p>
+                <p><strong>📍 Location:</strong> {event['location']}</p>
+                <p><strong>👥 Attendees:</strong> {event['attendees']}/{event['capacity']}</p>
+                <p><strong>🎫 Organizer:</strong> {event['organizer']}</p>
+                <p>{event['description']}</p>
                 """
-                
+    
                 col1, col2 = st.columns([3, 1])
                 with col1:
                     st.markdown(f"""
@@ -1157,17 +1156,17 @@ def events_page():
                             st.image(event['image'], use_container_width=True)
                     except Exception as e:
                         st.warning(f"Could not load image: {str(e)}")
-                
+    
                 # View Details button with expanded details
                 if st.button(f"View Details for {event['name']}", key=f"details_{event['name']}"):
                     st.markdown(event['details'], unsafe_allow_html=True)
-                
+    
                 # RSVP button
                 if st.button("RSVP", key=f"rsvp_{event['name']}"):
                     st.success(f"You've RSVP'd to {event['name']}!")
                     time.sleep(1)
                     st.rerun()
-                
+    
                 st.markdown("---")
     
     with tab2:
